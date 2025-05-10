@@ -100,7 +100,7 @@ npm install
 1. Start the backend server:
 ```bash
 cd backend
-npm run dev
+npm run dev or if that did not work node server.js
 ```
 
 2. In a new terminal, start the frontend:
@@ -113,19 +113,7 @@ The application will be available at:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000
 
-### Production Mode
 
-1. Build the frontend:
-```bash
-cd frontend
-npm run build
-```
-
-2. Start the production server:
-```bash
-cd backend
-npm start
-```
 
 ## API Endpoints
 
