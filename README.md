@@ -19,7 +19,7 @@ Before running this project, make sure you have the following installed:
 
 ## Environment Variables
 
-Create a `.env` file in your backend directory and add the following variables:
+In `.env` file in your backend directory and add the following variables:
 
 ```env
 PORT=5000
@@ -71,11 +71,7 @@ NODE_ENV=development
    - Use "development" for local development
    - Use "production" when deploying
 
-### Important Security Notes:
-- Never commit your `.env` file to version control
-- Keep your JWT_SECRET secure and unique
-- Use app passwords instead of your main email password
-- Regularly rotate your secrets and passwords
+
 
 ## Installation
 
