@@ -20,6 +20,7 @@ import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
 import { LinearProgress } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -135,7 +136,11 @@ const Dashboard = () => {
 
   const handleTaskStatusChange = async (taskId, newStatus) => {
     if (!selectedProject) return;
-    await updateTask(taskId, { status: newStatus }, selectedProject._id);
+    const updateData = { 
+      status: newStatus,
+      ...(newStatus === 'completed' ? { dateCompleted: new Date() } : {})
+    };
+    await updateTask(taskId, updateData, selectedProject._id);
     await fetchActivitySummary();
     showSnackbar('Task status updated!', 'info');
   };
@@ -329,127 +334,112 @@ const Dashboard = () => {
                 </>
               ) : (
                 <>
-                  <Button onClick={handleBackToProjects} sx={{ mb: 2 }} variant="outlined">Back to Projects</Button>
-                  <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>{selectedProject.name}</Typography>
-                  {/* Task Creation for selected project */}
-                  <form onSubmit={handleCreateTask} style={{ marginBottom: 16 }}>
-                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                      <TextField
-                        label="Task title"
-                        value={newTask.title}
-                        onChange={e => setNewTask({ ...newTask, title: e.target.value })}
-                        size="small"
-                        fullWidth
-                      />
-                      <Select
-                        value={newTask.priority}
-                        onChange={e => setNewTask({ ...newTask, priority: e.target.value })}
-                        size="small"
-                        sx={{ minWidth: 140 }}
-                      >
-                        <MenuItem value="low">Low Priority</MenuItem>
-                        <MenuItem value="medium">Medium Priority</MenuItem>
-                        <MenuItem value="high">High Priority</MenuItem>
-                      </Select>
-                    </Box>
-                    <TextField
-                      label="Task description"
-                      value={newTask.description}
-                      onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-                      multiline
-                      minRows={2}
-                      fullWidth
-                      sx={{ mb: 2 }}
-                    />
-                    <Button type="submit" variant="contained" color="primary">Add Task</Button>
-                  </form>
-                  <Divider sx={{ my: 2 }} />
-                  {/* Tasks for selected project */}
-                  <TextField
-                    label="Search tasks"
-                    value={taskSearch}
-                    onChange={e => setTaskSearch(e.target.value)}
-                    size="small"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                  />
-                  {tasks.filter(task => task.project === selectedProject._id).length === 0 ? (
-                    <Box sx={{ textAlign: 'center', py: 4 }}>
-                      <AssignmentTurnedInIcon color="disabled" sx={{ fontSize: 48, mb: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        No tasks for this project yet.
+                  <Box sx={{ width: '100%', maxWidth: 1200, px: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <IconButton onClick={handleBackToProjects} sx={{ mr: 2 }}>
+                        <ArrowBackIcon />
+                      </IconButton>
+                      <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
+                        {selectedProject.name}
                       </Typography>
                     </Box>
-                  ) : (
-                    tasks
-                      .filter(task => task.project === selectedProject._id)
-                      .filter(task =>
-                        (task.title?.toLowerCase().includes(taskSearch.toLowerCase()) ||
-                          task.description?.toLowerCase().includes(taskSearch.toLowerCase()))
-                      )
-                      .map(task => (
-                        <Card key={task._id} sx={{ mb: 2, boxShadow: 1, borderRadius: 2 }}>
-                          <CardContent>
-                            <Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="subtitle1" fontWeight={600}>{task.title}</Typography>
-                                <Typography
-                                  variant="body2"
-                                  color={
-                                    task.priority === 'high' ? 'error' :
-                                    task.priority === 'medium' ? 'primary' :
-                                    'text.secondary'
-                                  }
-                                  sx={{ ml: 1, fontWeight: 600 }}
-                                >
-                                  {task.priority === 'low' && 'Low Priority'}
-                                  {task.priority === 'medium' && 'Medium Priority'}
-                                  {task.priority === 'high' && 'High Priority'}
-                                  {!task.priority && 'No Priority'}
-                                </Typography>
-                              </Box>
-                              <Typography variant="body2" color="text.secondary">{task.description}</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                              <Chip label={task.status} color={task.status === 'completed' ? 'success' : 'warning'} size="small" />
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 2, mt: 2, alignItems: 'center' }}>
-                              <Select
-                                value={task.status}
-                                onChange={async (e) => {
-                                  await handleTaskStatusChange(task._id, e.target.value);
-                                  fetchTasks(selectedProject._id);
-                                }}
-                                size="small"
-                                sx={{ minWidth: 140 }}
-                              >
-                                <MenuItem value="pending">Pending</MenuItem>
-                                <MenuItem value="in-progress">In Progress</MenuItem>
-                                <MenuItem value="completed">Completed</MenuItem>
-                              </Select>
-                              <Button
-                                variant="outlined"
-                                color="error"
-                                size="small"
-                                onClick={() => handleDeleteTask(task._id)}
-                              >
-                                Delete
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                sx={{ ml: 1 }}
-                                onClick={() => handleEditTaskOpen(task)}
-                              >
-                                <EditIcon fontSize="small" />
-                                Edit
-                              </Button>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      ))
-                  )}
+                    {/* Task Creation Form */}
+                    <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>Add New Task</Typography>
+                      <form onSubmit={handleCreateTask}>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              label="Task title"
+                              value={newTask.title}
+                              onChange={e => setNewTask({ ...newTask, title: e.target.value })}
+                              fullWidth
+                              required
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <Select
+                              value={newTask.priority}
+                              onChange={e => setNewTask({ ...newTask, priority: e.target.value })}
+                              fullWidth
+                              displayEmpty
+                            >
+                              <MenuItem value="low">Low Priority</MenuItem>
+                              <MenuItem value="medium">Medium Priority</MenuItem>
+                              <MenuItem value="high">High Priority</MenuItem>
+                            </Select>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <TextField
+                              label="Task description"
+                              value={newTask.description}
+                              onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+                              fullWidth
+                              multiline
+                              rows={2}
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Button type="submit" variant="contained" color="primary">
+                              Add Task
+                            </Button>
+                          </Grid>
+                        </Grid>
+                      </form>
+                    </Paper>
+                    <Grid container spacing={3}>
+                      {tasks
+                        .filter(task => task.project === selectedProject._id)
+                        .map(task => (
+                          <Grid item xs={12} key={task._id}>
+                            <Card>
+                              <CardContent>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                  <Box>
+                                    <Typography variant="h6">{task.title}</Typography>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                      {task.description}
+                                    </Typography>
+                                    <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                      <Chip 
+                                        label={`Created: ${new Date(task.dateCreated).toLocaleString()}`}
+                                        size="small"
+                                        variant="outlined"
+                                      />
+                                      {task.dateCompleted && (
+                                        <Chip 
+                                          label={`Completed: ${new Date(task.dateCompleted).toLocaleString()}`}
+                                          size="small"
+                                          variant="outlined"
+                                          color="success"
+                                        />
+                                      )}
+                                    </Box>
+                                  </Box>
+                                  <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <Select
+                                      value={task.status}
+                                      onChange={(e) => handleTaskStatusChange(task._id, e.target.value)}
+                                      size="small"
+                                    >
+                                      <MenuItem value="pending">Pending</MenuItem>
+                                      <MenuItem value="in-progress">In Progress</MenuItem>
+                                      <MenuItem value="completed">Completed</MenuItem>
+                                    </Select>
+                                    <IconButton onClick={() => handleEditTaskOpen(task)} size="small">
+                                      <EditIcon />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleDeleteTask(task._id)} size="small">
+                                      <DeleteIcon />
+                                    </IconButton>
+                                  </Box>
+                                </Box>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))}
+                    </Grid>
+                  </Box>
                 </>
               )}
             </Box>
